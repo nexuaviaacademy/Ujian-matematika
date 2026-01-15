@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ujian Matematika</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563EB;
+            --danger: #DC2626;
+            --success: #16A34A;
+            --bg: #F1F5F9;
+            --card: #FFFFFF;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding-bottom: 100px;
+            color: #334155;
+        }
+
+        /* LAYAR BLOKIR (ANTI CURANG) */
+        #block-screen {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: #fff; z-index: 9999;
+            display: none; /* Default sembunyi */
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+        .lock-icon { font-size: 80px; margin-bottom: 20px; }
+        .lock-title { font-size: 24px; font-weight: bold; color: var(--danger); margin-bottom: 10px; }
+        .lock-desc { color: #64748B; max-width: 400px; line-height: 1.5; }
+
+        /* HEADER */
+        .header {
+            background: var(--card); padding: 15px; position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
+        }
+        .timer { background: #1E293B; color: #FBBF24; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-family: monospace; }
+        .app-title { font-weight: bold; color: var(--primary); }
+
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+
+        /* KARTU IDENTITAS & SOAL */
+        .card { background: #fff; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .input-box { width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; margin-top: 5px; }
+
+        .q-badge { background: #DBEAFE; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .math-display { font-size: 20px; font-weight: 500; margin: 15px 0; display: flex; align-items: center; gap: 5px; }
+        
+        /* CSS PECAHAN */
+        .frac { display: inline-flex; flex-direction: column; text-align: center; vertical-align: middle; margin: 0 5px; }
+        .top { border-bottom: 2px solid #334155; display: block; padding: 0 2px; }
+        .bottom { display: block; padding: 0 2px; }
+
+        /* PILIHAN GANDA */
+        .opt-grid { display: grid; gap: 10px; }
+        @media(min-width:600px){ .opt-grid { grid-template-columns: 1fr 1fr; } }
+
+        .opt-item {
+            background: #fff; border: 1px solid #E2E8F0; padding: 12px; border-radius: 8px;
+            cursor: pointer; display: flex; align-items: center; transition: 0.2s;
+        }
+        .opt-item:hover { background: #F8FAFC; border-color: var(--primary); }
+        .opt-item.selected { background: #EFF6FF; border-color: var(--primary); }
+        .opt-circle {
+            width: 28px; height: 28px; border-radius: 50%; border: 2px solid #CBD5E1;
+            display: flex; align-items: center; justify-content: center; margin-right: 10px;
+            font-weight: bold; color: #94A3B8; flex-shrink: 0;
+        }
+        .opt-item.selected .opt-circle { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        /* TOMBOL SELESAI */
+        .submit-area {
+            position: fixed; bottom: 0; left: 0; right: 0; background: #fff;
+            padding: 15px; text-align: right; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 99;
+        }
+        .btn-main {
+            background: var(--primary); color: #fff; border: none; padding: 12px 24px;
+            border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%;
+        }
+        @media(min-width:600px){ .btn-main { width: auto; } }
+
+        /* MODAL HASIL */
+        .modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-box {
+            background: #fff; width: 90%; max-width: 400px; padding: 25px; border-radius: 12px; text-align: center;
+        }
+        .score { font-size: 48px; font-weight: 800; color: var(--primary); margin: 10px 0; }
+        .btn-wa {
+            background: #25D366; color: #fff; width: 100%; padding: 12px; border: none;
+            border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="block-screen">
+        <div class="lock-icon">🔒</div>
+        <div class="lock-title">AKSES DITOLAK</div>
+        <div class="lock-desc">
+            Maaf, sistem mendeteksi Anda <b>sudah mengerjakan ujian ini</b> sebelumnya di perangkat ini.<br><br>
+            Satu perangkat hanya diperbolehkan mengirim jawaban satu kali untuk mencegah kecurangan.
+        </div>
+        <div style="margin-top:20px; font-size:12px; color:#aaa;">ID Perangkat: <span id="deviceId"></span></div>
+    </div>
+
+    <div id="exam-app">
+        <div class="header">
+            <div class="app-title">Tryout Matematika</div>
+            <div class="timer" id="timer">02:30:00</div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <h3>Identitas Peserta</h3>
+                <label>Nama Lengkap</label>
+                <input type="text" id="nama" class="input-box" placeholder="Nama Anda...">
+                <label style="margin-top:10px; display:block;">Kelas</label>
+                <input type="text" id="kelas" class="input-box" placeholder="Kelas...">
+            </div>
+
+            <div id="soal-container"></div>
+        </div>
+
+        <div class="submit-area">
+            <button class="btn-main" onclick="cekSelesai()">KIRIM JAWABAN</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modalResult">
+        <div class="modal-box">
+            <h2>Hasil Ujian</h2>
+            <div class="score" id="scoreVal">0</div>
+            <p>Nilai Anda</p>
+            <div style="text-align:left; font-size:14px; margin: 15px 0; border-top:1px solid #eee; padding-top:10px;">
+                <div style="display:flex; justify-content:space-between;"><span>Nama:</span> <b id="outNama">-</b></div>
+                <div style="display:flex; justify-content:space-between;"><span>Benar:</span> <b id="outBenar" style="color:green">0</b></div>
+                <div style="display:flex; justify-content:space-between;"><span>Salah:</span> <b id="outSalah" style="color:red">0</b></div>
+            </div>
+            <button class="btn-wa" onclick="kirimWA()">
+                <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.654-.698c.997.545 2.127.838 3.298.838 3.18 0 5.765-2.586 5.765-5.766.001-3.18-2.585-5.766-5.766-5.766zm-9.397 10.999l1.625-5.945c-.482-1.373-.74-2.839-.74-4.364 0-7.388 6.012-13.401 13.401-13.401 7.391 0 13.403 6.014 13.403 13.403 0 7.389-6.012 13.402-13.403 13.402-2.368 0-4.636-.615-6.64-1.78l-6.191 1.624 1.545-2.939zm22.8-10.999c0-5.733-4.668-10.401-10.403-10.401-5.734 0-10.401 4.668-10.401 10.401 0 2.062.605 4.025 1.705 5.73l-1.121 4.102 4.188-1.099c1.649 1.002 3.535 1.567 5.629 1.567 5.735 0 10.403-4.668 10.403-10.401z"/></svg>
+                Lapor ke Guru
+            </button>
+        </div>
+    </div>
+
+<script>
+    // --- SECURITY CHECK (ANTI CURANG) ---
+    // Cek apakah browser ini sudah pernah submit
+    const UNIQUE_EXAM_KEY = 'ujian_mtk_150_done_v1';
+    
+    // Tampilkan ID unik (hanya visual)
+    document.getElementById('deviceId').innerText = Math.random().toString(36).substr(2, 9).toUpperCase();
+
+    if (localStorage.getItem(UNIQUE_EXAM_KEY) === 'true') {
+        // Jika sudah pernah submit, blokir layar
+        document.getElementById('exam-app').style.display = 'none';
+        document.getElementById('block-screen').style.display = 'flex';
+    }
+
+    // --- SETUP SOAL ---
+    const TOTAL = 150;
+    const TIME_MIN = 150;
+    let dbSoal = [];
+
+    // Generator Soal (Bilangan Bulat & Pecahan)
+    function generateSoal() {
+        for(let i=1; i<=TOTAL; i++) {
+            let data = { id: i, user: null };
+            
+            if(i <= 100) { // 1-100 Bilangan Bulat
+                let t = Math.floor(Math.random()*4);
+                let a = r(-20,50), b = r(-10,10); if(b===0) b=2;
+                
+                if(t===0) { data.html=`${a} + (${r(-20,20)})`; data.ans=eval(data.html); }
+                else if(t===1) { data.html=`${a} × ${b}`; data.ans=a*b; }
+                else if(t===2) { let h=r(-10,10), p=r(2,8); data.html=`${h*p} ÷ ${p}`; data.ans=h; }
+                else { let h=r(2,4); data.html=`(${a} + ${b}) × ${h}`; data.ans=(a+b)*h; }
+            } else { // 101-150 Pecahan (Hasil Bulat)
+                let t = Math.floor(Math.random()*2);
+                if(t===0) { // Penjumlahan Pecahan
+                    let v1=r(1,5), v2=r(1,5), d1=r(2,4), d2=r(2,4);
+                    data.html = `${frac(v1*d1,d1)} + ${frac(v2*d2,d2)}`;
+                    data.ans = v1+v2;
+                } else { // Perkalian Pecahan
+                    let h=r(1,10), d=r(2,5);
+                    data.html = `${frac(1,d)} × ${h*d}`;
+                    data.ans = h;
+                }
+            }
+
+            // Opsi Pengecoh
+            let set = new Set([data.ans]);
+            while(set.size < 5) set.add(data.ans + r(-5,5) || data.ans+1);
+            data.opsi = Array.from(set).sort(()=>Math.random()-0.5);
+            
+            dbSoal.push(data);
+        }
+    }
+
+    function frac(top, bot) { return `<span class="frac"><span class="top">${top}</span><span class="bottom">${bot}</span></span>`; }
+    function r(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
+
+    // Render UI
+    function render() {
+        const area = document.getElementById('soal-container');
+        dbSoal.forEach((s, idx) => {
+            let div = document.createElement('div');
+            div.className = 'card';
+            div.id = `soal-${idx}`;
+            
+            let label = s.id > 100 ? 'Pecahan' : 'Bilangan Bulat';
+            let html = `<div class="q-badge">No. ${s.id} (${label})</div><div class="math-display">${s.html} = ...</div><div class="opt-grid">`;
+            
+            const abc = ['A','B','C','D','E'];
+            s.opsi.forEach((opt, i) => {
+                html += `<div class="opt-item" onclick="jawab(${idx}, ${opt}, this)"><div class="opt-circle">${abc[i]}</div><div>${opt}</div></div>`;
+            });
+            html += `</div>`;
+            div.innerHTML = html;
+            area.appendChild(div);
+        });
+    }
+
+    function jawab(idx, val, el) {
+        dbSoal[idx].user = val;
+        let p = el.parentElement;
+        for(let c of p.children) c.classList.remove('selected');
+        el.classList.add('selected');
+    }
+
+    // --- SUBMIT & LOCKING ---
+    function cekSelesai() {
+        let nama = document.getElementById('nama').value.trim();
+        let kelas = document.getElementById('kelas').value.trim();
+        if(!nama || !kelas) { alert("Nama dan Kelas wajib diisi!"); return; }
+        
+        if(confirm("Apakah Anda yakin ingin menyelesaikan ujian? Setelah ini Anda tidak bisa mengulang.")) {
+            hitungNilai(nama, kelas);
+        }
+    }
+
+    function hitungNilai(nama, kelas) {
+        // 1. KUNCI BROWSER
+        localStorage.setItem(UNIQUE_EXAM_KEY, 'true');
+
+        // 2. Hitung
+        let benar = 0, salah = 0;
+        dbSoal.forEach(s => { s.user === s.ans ? benar++ : salah++; });
+        let nilai = Math.round((benar/TOTAL)*100);
+
+        // 3. Tampil Hasil
+        document.getElementById('scoreVal').innerText = nilai;
+        document.getElementById('outNama').innerText = nama;
+        document.getElementById('outBenar').innerText = benar;
+        document.getElementById('outSalah').innerText = salah;
+        document.getElementById('modalResult').style.display = 'flex';
+        
+        // Matikan akses ke soal (background)
+        document.getElementById('soal-container').style.pointerEvents = 'none';
+        document.querySelector('.submit-area').style.display = 'none';
+    }
+
+    function kirimWA() {
+        let n = document.getElementById('outNama').innerText;
+        let s = document.getElementById('scoreVal').innerText;
+        let b = document.getElementById('outBenar').innerText;
+        let w = document.getElementById('outSalah').innerText;
+        let k = document.getElementById('kelas').value;
+        
+        let msg = `*LAPORAN UJIAN* %0A--------------------%0A👤 ${n} (${k})%0A🏆 Nilai: ${s}%0A✅ Benar: ${b}%0A❌ Salah: ${w}%0A--------------------%0A_Validasi: ${Math.random().toString(36).substr(2,5)}_`;
+        window.open(`https://wa.me/6285890554900?text=${msg}`, '_blank');
+    }
+
+    // Timer
+    let time = TIME_MIN * 60;
+    setInterval(() => {
+        if(time>0) {
+            time--;
+            let h=Math.floor(time/3600), m=Math.floor((time%3600)/60), s=time%60;
+            document.getElementById('timer').innerText = `${h}:${m<10?'0'+m:m}:${s<10?'0'+s:s}`;
+        } else if(document.getElementById('modalResult').style.display === 'none') {
+            alert("Waktu Habis!");
+            // Paksa submit jika waktu habis (masukkan data dummy jika kosong)
+            let n = document.getElementById('nama').value || "Tanpa Nama";
+            let k = document.getElementById('kelas').value || "-";
+            hitungNilai(n, k);
+        }
+    }, 1000);
+
+    generateSoal();
+    render();
+</script>
+
+</body>
+</html>
